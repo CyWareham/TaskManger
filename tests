@@ -1,0 +1,456 @@
+#define CATCH_CONFIG_MAIN
+#include "catch_amalgamated.hpp"
+#include <sstream>
+#include <iostream>
+#include <vector>
+#define main app_main
+#include "main.cpp"
+#undef main
+using namespace std;
+
+//Build using:
+//g++ -std=c++17 test.cpp catch_amalgamated.cpp -o test
+
+// Silas Testing
+
+// ** addTask Chatch2 Tests **
+
+//Happy test
+TEST_CASE("addTask, happy test") {
+    vector<Task> tasks;
+    istringstream input("Wash car\n12/25/2025\nHome\n2\n");
+    auto* old = cin.rdbuf(input.rdbuf());
+    addTask(tasks);
+    cin.rdbuf(old);
+    REQUIRE(tasks.size() == 1);
+    REQUIRE(tasks[0].taskDescription == "Wash car");
+    REQUIRE(tasks[0].taskDueDate == "12/25/2025");
+    REQUIRE(tasks[0].taskTag == "Home");
+    REQUIRE(tasks[0].priority == 2);
+    REQUIRE_FALSE(tasks[0].isComplete);
+}
+
+//Sad test
+TEST_CASE("addTask, sad test") {
+    vector<Task> tasks;
+
+    //Enters bad priority (99), then enters good priority (1)
+    istringstream input("Homework\n01/01/2026\nSchool\n99\n1\n");
+    auto* old = cin.rdbuf(input.rdbuf());
+    addTask(tasks);
+    cin.rdbuf(old);
+    REQUIRE(tasks.size() == 1);
+    REQUIRE(tasks[0].taskDescription == "Homework");
+    REQUIRE(tasks[0].taskDueDate == "01/01/2026");
+    REQUIRE(tasks[0].taskTag == "School");
+    REQUIRE(tasks[0].priority == 1);
+    REQUIRE_FALSE(tasks[0].isComplete);
+}
+
+// ** completeTask Chatch2 Tests **
+
+//Happy test
+TEST_CASE("completeTask, happy test") {
+    vector<Task> tasks;
+    Task t;
+    t.taskDescription = "Do homework";
+    t.taskDueDate = "10/10/2026";
+    t.taskTag = "School";
+    t.priority = 2;
+    t.isComplete = false;
+    tasks.push_back(t);
+    istringstream input("1\n");
+    auto* old = cin.rdbuf(input.rdbuf());
+    completeTask(tasks);
+    cin.rdbuf(old);
+    REQUIRE(tasks.size() == 1);
+    REQUIRE(tasks[0].isComplete == true);
+}
+
+//Sad test
+TEST_CASE("completeTask, sad test") {
+    vector<Task> tasks;
+    Task t;
+    t.taskDescription = "Wash car";
+    t.taskDueDate = "11/11/2026";
+    t.taskTag = "Personal";
+    t.priority = 3;
+    t.isComplete = false;
+    tasks.push_back(t);
+    istringstream input("99\n");
+    auto* old = cin.rdbuf(input.rdbuf());
+    completeTask(tasks);
+    cin.rdbuf(old);
+    REQUIRE(tasks.size() == 1);
+    REQUIRE(tasks[0].isComplete == false);
+}
+
+// ** searchTask Chatch2 Tests **
+
+//Happy test
+TEST_CASE("searchTask, happy test") {
+    vector<Task> tasks;
+    Task t1;
+    t1.taskDescription = "Do homework";
+    t1.taskDueDate = "10/10/2026";
+    t1.taskTag = "School";
+    t1.priority = 2;
+    tasks.push_back(t1);
+    Task t2;
+    t2.taskDescription = "Wash car";
+    t2.taskDueDate = "11/11/2026";
+    t2.taskTag = "Personal";
+    t2.priority = 3;
+    tasks.push_back(t2);
+    istringstream input("home\n");
+    auto* cinOld = cin.rdbuf(input.rdbuf());
+    ostringstream output;
+    auto* coutOld = cout.rdbuf(output.rdbuf());
+    searchTask(tasks);
+    cin.rdbuf(cinOld);
+    cout.rdbuf(coutOld);
+    string out = output.str();
+    REQUIRE(out.find("Do homework") != string::npos);
+    REQUIRE(out.find("Wash car") == string::npos);
+}
+
+//Sad test
+TEST_CASE("searchTask, sad test") {
+    vector<Task> tasks;
+    Task t1;
+    t1.taskDescription = "Buy groceries";
+    t1.taskDueDate = "09/09/2025";
+    t1.taskTag = "Errands";
+    t1.priority = 2;
+    tasks.push_back(t1);
+    istringstream input("xyz\n");
+    auto* cinOld = cin.rdbuf(input.rdbuf());
+    ostringstream output;
+    auto* coutOld = cout.rdbuf(output.rdbuf());
+    searchTask(tasks);
+    cin.rdbuf(cinOld);
+    cout.rdbuf(coutOld);
+    string out = output.str();
+    REQUIRE(out.find("No tasks matched search.") != string::npos);
+}
+
+// ** executeChoice Chatch2 Tests **
+
+//Happy test
+
+TEST_CASE("executeChoice, happy test")
+{
+    vector<Task> tasks;
+    Task t;
+    t.taskDescription = "Homework";
+    t.taskDueDate     = "10/10/2026";
+    t.taskTag         = "School";
+    t.priority        = 2;
+    t.isComplete      = false;
+    tasks.push_back(t);
+    ostringstream output;
+    auto* coutOld = cout.rdbuf(output.rdbuf());
+    executeChoice(2, tasks);
+    cout.rdbuf(coutOld);
+    string out = output.str();
+    REQUIRE(out.find("Current Tasks") != string::npos);
+    REQUIRE(out.find("Homework") != string::npos);
+}
+
+//Sad test
+
+TEST_CASE("executeChoice, sad test") {
+    vector<Task> tasks;
+
+    Task t;
+    t.taskDescription = "Clean dog poop";
+    t.taskDueDate     = "12/12/2026";
+    t.taskTag         = "Home";
+    t.priority        = 1;
+    t.isComplete      = false;
+    tasks.push_back(t);
+    istringstream input("2\n");
+    auto* cinOld = cin.rdbuf(input.rdbuf());
+    ostringstream output;
+    auto* coutOld = cout.rdbuf(output.rdbuf());
+    executeChoice(99, tasks);
+    cin.rdbuf(cinOld);
+    cout.rdbuf(coutOld);
+    string out = output.str();
+    REQUIRE(out.find("Error: Please enter a number from 1 to 8.") != string::npos);
+    REQUIRE(out.find("Clean dog poop") != string::npos);
+}
+
+// Emily Testing
+
+// DisplayMainMenu — happy path
+TEST_CASE("DisplayMainMenu shows correct menu output") {
+    stringstream buffer;
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    DisplayMainMenu();
+
+    cout.rdbuf(oldCout);
+    string output = buffer.str();
+
+    REQUIRE(output.find("1. Add task") != string::npos);
+    REQUIRE(output.find("8. Exit") != string::npos);
+    REQUIRE(output.find("Enter Choice") != string::npos);
+}
+
+// DisplayMainMenu — sad path
+TEST_CASE("DisplayMainMenu handles no input safely") {
+    stringstream buffer;
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    // No cin needed, function does not read input
+    DisplayMainMenu();
+
+    cout.rdbuf(oldCout);
+    string output = buffer.str();
+
+    REQUIRE(!output.empty());
+}
+
+// removeTask — sad path
+TEST_CASE("removeTask sad path -- empty vector") {
+    vector<Task> tasks;
+
+    stringstream input("1\n");
+    stringstream buffer;
+
+    cin.rdbuf(input.rdbuf());
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    removeTask(tasks);
+
+    cout.rdbuf(oldCout);
+    cin.rdbuf(cin.rdbuf());
+
+    string output = buffer.str();
+
+    REQUIRE(output.find("No tasks available") != string::npos);
+}
+
+// removeTask — happy path
+TEST_CASE("removeTask happy path -- valid index removes task") {
+    vector<Task> tasks = {
+        {"Clean room", "01/01/2025", "Home", false, 2},
+        {"Do homework", "01/05/2025", "School", false, 1}
+    };
+
+    stringstream input("1\n");
+    stringstream buffer;
+
+    cin.rdbuf(input.rdbuf());
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    removeTask(tasks);
+
+    cout.rdbuf(oldCout);
+    cin.rdbuf(cin.rdbuf());
+
+    REQUIRE(tasks.size() == 1);
+    REQUIRE(tasks[0].taskDescription == "Do homework");
+}
+
+// editTask — sad path
+TEST_CASE("editTask sad path -- no tasks available") {
+    vector<Task> tasks;
+
+    stringstream input("1\n");
+    stringstream buffer;
+
+    cin.rdbuf(input.rdbuf());
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    editTask(tasks);
+
+    cout.rdbuf(oldCout);
+    cin.rdbuf(cin.rdbuf());
+
+    string output = buffer.str();
+
+    REQUIRE(output.find("No Tasks available") != string::npos);
+}
+
+// editTask — happy path
+TEST_CASE("editTask happy path -- updates description") {
+    vector<Task> tasks = {
+        {"Old description", "01/01/2025", "Tag", false, 1}
+    };
+
+    // Inputs:
+    // 1 → choose task #1
+    // 1 → edit description
+    // "New description" → new text
+    // 5 → exit menu
+    stringstream input("1\n1\nNew description\n5\n");
+    stringstream buffer;
+
+    cin.rdbuf(input.rdbuf());
+    auto oldCout = cout.rdbuf(buffer.rdbuf());
+
+    editTask(tasks);
+
+    cout.rdbuf(oldCout);
+    cin.rdbuf(cin.rdbuf());
+
+    REQUIRE(tasks[0].taskDescription == "New description");
+}
+
+// loadTasks — sad path
+TEST_CASE("loadTasks sad path -- no file present") {
+    vector<Task> tasks;
+
+    // Ensure file is gone
+    remove("Tasks.txt");
+
+    loadTasks(tasks);
+
+    REQUIRE(tasks.empty());
+}
+
+// loadTasks — happy path
+TEST_CASE("loadTasks happy path -- loads tasks from file") {
+    // Create test file
+    ofstream file("Tasks.txt");
+    file << "Task A;01/01/2025;Work;1;2\n";
+    file << "Task B;02/01/2025;Home;0;3\n";
+    file.close();
+
+    vector<Task> tasks;
+
+    loadTasks(tasks);
+
+    REQUIRE(tasks.size() == 2);
+
+    REQUIRE(tasks[0].taskDescription == "Task A");
+    REQUIRE(tasks[0].isComplete == true);
+    REQUIRE(tasks[0].priority == 2);
+
+    REQUIRE(tasks[1].taskDescription == "Task B");
+    REQUIRE(tasks[1].isComplete == false);
+    REQUIRE(tasks[1].priority == 3);
+
+    // Clean up
+    remove("Tasks.txt");
+}
+
+// Cy Testing
+
+//viewTasks sad path
+TEST_CASE("viewTasks sad path - empty vector"){
+        vector<Task> tasks;
+
+        stringstream buffer;
+        streambuf* oldCout = cout.rdbuf(buffer.rdbuf());
+        viewTasks(tasks);
+
+        cout.rdbuf(oldCout);
+        string output = buffer.str();
+
+        REQUIRE(output.find("No tasks available.") != string::npos);
+}
+
+//viewTasks happy path
+TEST_CASE("viewTasks happy path - non-empty vector"){
+        vector<Task> tasks = {
+                {"1", "01/01/2025", "Work", false, 1},
+                {"2", "02/02/2025", "Personal", true, 3}
+        };
+
+        stringstream buffer;
+        streambuf* oldCout = cout.rdbuf(buffer.rdbuf());
+
+        viewTasks(tasks);
+
+        cout.rdbuf(oldCout);
+        string output = buffer.str();
+
+        REQUIRE(output.find("1") != string::npos);
+        REQUIRE(output.find("2") != string::npos);
+}
+
+
+//filterByTag sad path
+TEST_CASE("filterByTag sad path - tag does not exist"){
+        vector<Task> tasks = {
+                {"1", "01/01/2025", "Work", false, 1},
+                {"2", "02/02/2025", "Personal", true, 3}
+        };
+
+        stringstream buffer;
+        streambuf* oldCout = cout.rdbuf(buffer.rdbuf());
+
+        istringstream input("School\n");
+        cin.rdbuf(input.rdbuf());
+
+        filterByTag(tasks);
+
+        cout.rdbuf(oldCout);
+        cin.rdbuf(cin.rdbuf());
+        string output = buffer.str();
+
+        REQUIRE(output.find("No tasks found") != string::npos);
+}
+
+//filterByTag happy path
+TEST_CASE("filterByTag happy path - tag exsist"){
+        vector<Task> tasks = {
+                {"1", "01/01/2025", "Work", false, 1},
+                {"2", "02/02/2025", "Personal", true, 3}
+        };
+
+        stringstream buffer;
+        streambuf* oldCout = cout.rdbuf(buffer.rdbuf());
+
+        istringstream input("Work\n");
+        cin.rdbuf(input.rdbuf());
+
+        filterByTag(tasks);
+
+        cout.rdbuf(oldCout);
+        cin.rdbuf(cin.rdbuf());
+        string output = buffer.str();
+
+        REQUIRE(output.find("1") != string::npos);
+}
+
+//saveFile sad path
+TEST_CASE("saveFile sad path - empty vector"){
+        vector<Task> tasks;
+
+        saveFile(tasks);
+
+        ifstream file("Tasks.txt");
+        REQUIRE(file.is_open());
+
+        string line;
+        REQUIRE_FALSE(getline(file, line));
+
+        file.close();
+        remove("Tasks.txt");
+}
+
+//saveFile happy path
+TEST_CASE("saveFile happy path - non-empty vector"){
+        vector<Task> tasks = {
+                {"1", "01/01/2025", "Work", false, 1},
+                {"2", "02/02/2025", "Personal", true, 3}
+        };
+
+        saveFile(tasks);
+
+        ifstream file("Tasks.txt");
+        REQUIRE(file.is_open());
+
+        string line;
+        getline(file, line);
+        REQUIRE(line.find("1") != string::npos);
+        getline(file, line);
+        REQUIRE(line.find("2") != string::npos);
+
+        file.close();
+        remove("Tasks.txt");
+}
